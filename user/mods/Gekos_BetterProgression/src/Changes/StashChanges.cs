@@ -26,7 +26,7 @@ public static class StashChanges
 
     public static bool Apply(Context context)
     {
-        foreach (var profile in context.tables.Templates.Profiles)
+        foreach (var profile in context.templateTable.Profiles)
         {
             foreach (var side in new TemplateSide[] { profile.Value.Bear, profile.Value.Usec })
             {
@@ -55,12 +55,12 @@ public static class StashChanges
 
         foreach (var stashUpdate in stashUpdates)
         {
-            TemplateItem stashItem = context.tables.Templates.Items[stashUpdate.Key];
+            TemplateItem stashItem = context.templateTable.Items[stashUpdate.Key];
             GridProperties? stashProperties = stashItem.Properties.Grids.First().Properties;
             stashProperties.CellsV = stashUpdate.Value;
         }
 
-        Dictionary<string, Stage>? hideoutStashStages = context.tables.Hideout.Areas.Find((area) => area.Type == HideoutAreas.Stash).Stages;
+        Dictionary<string, Stage>? hideoutStashStages = context.hideoutTable.Areas.Find((area) => area.Type == HideoutAreas.Stash).Stages;
         foreach (var stage in hideoutStashStages.Values)
         {
             var currencyRequirements = stage.Requirements.FindAll((req) => Utils.IsCurrency(req.TemplateId) && req.Count != null);

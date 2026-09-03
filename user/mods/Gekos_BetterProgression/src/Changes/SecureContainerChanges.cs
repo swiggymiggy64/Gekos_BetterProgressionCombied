@@ -22,7 +22,7 @@ public class SecureContainerChanges()
     {
         foreach (KeyValuePair<string, int[][]> item in context.config.secureContainerProgression.sizeChanges)
         {
-            TemplateItem containerItem = context.tables.Templates.Items[item.Key];
+            TemplateItem containerItem = context.templateTable.Items[item.Key];
             Grid? gridTemplate = containerItem.Properties?.Grids?.First();
             int[][] gridSizes = item.Value;
             List<Grid> newGrids = new();
@@ -69,7 +69,7 @@ public class SecureContainerChanges()
 
     public static void ApplyStarterContainer(Context context)
     {
-        Dictionary<string, ProfileSides> profileTemplates = context.tables.Templates.Profiles;
+        Dictionary<string, ProfileSides> profileTemplates = context.templateTable.Profiles;
         foreach (KeyValuePair<string, ProfileSides> item in profileTemplates)
         {
             Item? bearContainer = item.Value.Bear?.Character?.Inventory?.Items?.Find((Item x) => (x.SlotId == "SecuredContainer"));

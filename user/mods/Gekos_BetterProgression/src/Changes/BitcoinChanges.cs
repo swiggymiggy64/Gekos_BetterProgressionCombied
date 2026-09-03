@@ -1,5 +1,7 @@
 ﻿using SPTarkov.Server.Core.Models.Eft.Hideout;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
+using SPTarkov.Server.Core.Constants;
+using SPTarkov.Server.Core.Models.Enums;
 
 namespace GekosBetterProgression.Changes;
 
@@ -9,7 +11,7 @@ public class BitcoinChanges
     {
         if (context.config.bitcoinChanges.overrideValue)
         {
-            HandbookItem? item = context.tables.Templates.Handbook.Items.Find((item) => item.Id == ItemTpl.BARTER_PHYSICAL_BITCOIN);
+            HandbookItem? item = context.templateTable.Handbook.Items.Find((item) => item.Id == ItemTpl.BARTER_PHYSICAL_BITCOIN);
             if (item is null)
             {
                 context.logger.Error("Could not find base bitcoin to edit");
@@ -18,7 +20,7 @@ public class BitcoinChanges
             item.Price = context.config.bitcoinChanges.value;
         }
 
-        List<HideoutProduction>? btcProduction = context.tables.Hideout.Production.Recipes?.FindAll((production) => production.EndProduct == ItemTpl.BARTER_PHYSICAL_BITCOIN);
+        List<HideoutProduction>? btcProduction = context.hideoutTable.Production.Recipes?.FindAll((production) => production.EndProduct == ItemTpl.BARTER_PHYSICAL_BITCOIN);
         if (btcProduction is null)
         {
             context.logger.Error("Could not find Bitcoin craft");
@@ -31,11 +33,11 @@ public class BitcoinChanges
             prod.ProductionLimitCount = context.config.bitcoinChanges.btcCapacity;
         }
 
-        context.tables.Hideout.Settings.GpuBoostRate = context.config.bitcoinChanges.gpuBoostRate;
+        context.hideoutTable.Settings.GpuBoostRate = context.config.bitcoinChanges.gpuBoostRate;
 
         if (context.config.bitcoinChanges.cannotBuyGPU)
         {
-            foreach (Trader trader in context.tables.Traders.Values)
+            foreach (Trader trader in context.tradersTable.Values)
             {
                 if (trader.Assort == null)
                 {

@@ -3,7 +3,7 @@ using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
 using SPTarkov.Server.Core.Models.Enums;
-using SPTarkov.Server.Core.Models.Spt.Server;
+using SPTarkov.Server.Core.Models.Spt.Tables;
 using static GekosBetterProgression.AdvancedConfig;
 //using gekosbetterprogression.AlgoRebalancing.Types;
 
@@ -33,7 +33,7 @@ public static class Utils
     {
         HashSet<MongoId> list = new();
 
-        foreach (var kvp in context.tables.Templates.Items)
+        foreach (var kvp in context.templateTable.Items)
         {
             // for some reason apollo and malboro cigs have dogtagqualities set, but false
             // nullables are good for programming yes yes
@@ -54,7 +54,7 @@ public static class Utils
     {
         List<(Trader, Item)> found = new();
 
-        foreach (var trader in context.tables.Traders.Values)
+        foreach (var trader in context.tradersTable.Values)
         {
             if (trader.Assort == null)
                 continue;
@@ -124,7 +124,7 @@ public static class Utils
 
     public static bool ContainsAttachment(Item item, List<Item> assort, string attachmentId, Context context)
     {
-        if (!context.tables.Templates.Items.TryGetValue(item.Template, out var template))
+        if (!context.templateTable.Items.TryGetValue(item.Template, out var template))
         {
             // Warn only once per missing template to avoid flooding logs when other mods reference
             // non-existent items repeatedly.
@@ -190,7 +190,7 @@ public static class Utils
             return true;
         }
 
-        foreach (var trader in context.tables.Traders.Values)
+        foreach (var trader in context.tradersTable.Values)
         {
             if (trader.Assort == null)
                 continue;
@@ -201,7 +201,7 @@ public static class Utils
                 var tradeKey = trade.Id.ToString();
 
                 // Skip trades which reference table templates that don't exist.
-                if (string.IsNullOrEmpty(trade.Template) || !context.tables.Templates.Items.ContainsKey(trade.Template))
+                if (string.IsNullOrEmpty(trade.Template) || !context.templateTable.Items.ContainsKey(trade.Template))
                 {
                     if (!MissingTemplateWarned.Contains(trade.Template))
                     {
@@ -297,21 +297,21 @@ public static class Utils
 
     public static void ApplyAdditionalQuestRewards(Context context, AdditionalQuestRewards additionalQuestRewards)
     {
-        DatabaseTables tables = context.tables;
+        TemplateTable tables = context.templateTable;
         var startedRewards = additionalQuestRewards.started;
         var successRewards = additionalQuestRewards.success;
 
         foreach (KeyValuePair<string, Reward> questIDToReward in startedRewards)
         {
             // this is not a typo, this one has a capitalized S
-            tables.Templates.Quests[questIDToReward.Key].Rewards.TryGetValue("Started", out List<Reward>? rewardList);
+            tables.Quests[questIDToReward.Key].Rewards.TryGetValue("Started", out List<Reward>? rewardList);
             rewardList?.Add(questIDToReward.Value);
         }
 
         foreach (KeyValuePair<string, Reward> questIDToReward in successRewards)
         {
             // this is not a typo, this one has a capitalized S
-            tables.Templates.Quests[questIDToReward.Key].Rewards.TryGetValue("Success", out List<Reward>? rewardList);
+            tables.Quests[questIDToReward.Key].Rewards.TryGetValue("Success", out List<Reward>? rewardList);
             rewardList?.Add(questIDToReward.Value);
         }
     }
@@ -335,18 +335,18 @@ public static class Utils
         string rewardId,
         string targetId)
     {
-        var trader = context.tables.Traders[traderId];
+        var trader = context.tradersTable[traderId];
 
         trader.QuestAssort["success"][trade] = lockQuest;
 
-        var rewards = context.tables.Templates.Quests[lockQuest].Rewards?["Success"];
+        var rewards = context.templateTable.Quests[lockQuest].Rewards?["Success"];
 
         rewards?.Add(new Reward
         {
             Type = RewardType.AssortmentUnlock,
             Index = rewards.Count,
-            TraderId = traderId,
-            Target = targetId,
+            TraderId = new(traderId, null),
+            Target = new(targetId),
             Items = new()
             {
                 new Item
@@ -408,8 +408,8 @@ public static class Utils
     {
         var c = context.config.algorithmicalRebalancing.weaponRules.upshiftRules;
 
-        var aTempl = context.tables.Templates.Items[a.Template];
-        var bTempl = context.tables.Templates.Items[b.Template];
+        var aTempl = context.templateTable.Items[a.Template];
+        var bTempl = context.templateTable.Items[b.Template];
 
         if (c.devideNicheByFiremode &&
             BestFiremode(aTempl) != BestFiremode(bTempl))

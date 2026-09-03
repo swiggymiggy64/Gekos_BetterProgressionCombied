@@ -8,7 +8,7 @@ public static class Weapon
     {
         var config = context.config.algorithmicalRebalancing.weaponRules;
 
-        var itemTemplate = context.tables.Templates.Items[item.Template];
+        var itemTemplate = context.templateTable.Items[item.Template];
         var fireMode = Utils.BestFiremode(itemTemplate);
         var fireRate = itemTemplate.Properties.BFirerate;
         float loyalty = (float)config.defaultBaseLoyalty;

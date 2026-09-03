@@ -1,5 +1,7 @@
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
+using SPTarkov.Server.Core.Constants;
+using SPTarkov.Server.Core.Models.Enums;
 
 namespace GekosBetterProgression.AlgoRebalance;
 
@@ -7,7 +9,7 @@ public static class Ammo
 {
     public static float CalculateAmmoLoyalty(Item item, Context context)
     {
-        var itemTemplate = context.tables.Templates.Items[item.Template];
+        var itemTemplate = context.templateTable.Items[item.Template];
         return ScoreAmmo(itemTemplate, context);
     }
 
@@ -58,7 +60,7 @@ public static class Ammo
     {
         var config = context.config.algorithmicalRebalancing.ammoRules;
 
-        List<HideoutProduction>? crafts = context.tables.Hideout.Production.Recipes;
+        List<HideoutProduction>? crafts = context.hideoutTable.Production.Recipes;
 
         if (crafts == null)
         {
@@ -71,7 +73,7 @@ public static class Ammo
             var ammoId = craft.EndProduct;
             if (!context.itemHelper.IsOfBaseclass(ammoId, BaseClasses.AMMO)) continue;
 
-            float score = ScoreAmmo(context.tables.Templates.Items[ammoId], context);
+            float score = ScoreAmmo(context.templateTable.Items[ammoId], context);
 
             if (Utils.IsQuestLockedCraft(craft)) score += (float)context.config.algorithmicalRebalancing.questLockDelta;
 

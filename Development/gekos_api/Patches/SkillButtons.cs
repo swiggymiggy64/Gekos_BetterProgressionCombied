@@ -31,7 +31,7 @@ namespace gekos_api.Patches
 
         static SkillButtons()
         {
-            buttonsPrefab = Utils.LoadGameObject("skillsbutton.bundle", "Buttons Panel");
+            buttonsPrefab = gekos_api.Helpers.Utils.LoadGameObject("skillsbutton.bundle", "Buttons Panel");
             config = ConfigHandler.GetPointsConfig();
             upButtons = new Dictionary<ESkillId, GameObject>();
             downButtons = new Dictionary<ESkillId, GameObject>();
@@ -43,7 +43,7 @@ namespace gekos_api.Patches
         }
 
         [PatchPostfix]
-        static void Postfix(ref SkillIcon __instance, SkillClass skill)
+        static void Postfix(ref SkillIcon __instance, Skill skill)
         {
             if (!config.enable) return;
 
@@ -109,7 +109,7 @@ namespace gekos_api.Patches
 
                 bool enableButton = AdditionalSkillLevels.GetAvailableSkillPoints() > 0;
 
-                if (Utils.GetPlayerProfile().Skills.TryGetSkill(up.Key, out SkillClass skill))
+                if (gekos_api.Helpers.Utils.GetPlayerProfile().Skills.TryGetSkill(up.Key, out Skill skill))
                 {
                     if (skill.Level >= 51) enableButton = false;
                 }
@@ -123,7 +123,7 @@ namespace gekos_api.Patches
 
                 bool enableButton = config.enableDeallocation;
 
-                if (Utils.GetPlayerProfile().Skills.TryGetSkill(down.Key, out SkillClass skill))
+                if (gekos_api.Helpers.Utils.GetPlayerProfile().Skills.TryGetSkill(down.Key, out Skill skill))
                 {
                     if (skill.Level <= 0) enableButton = false;
                 }
@@ -136,7 +136,7 @@ namespace gekos_api.Patches
         {
             bool res = AdditionalSkillLevels.TryDeltaLevels(skillId, delta);
             if (res) {
-                panel.method_1(); //Update visuals of the panel
+                panel.OnSkillLevelChanged();
                 UpdateSkillLevel(icon);
                 UpdateButtonsVisibility();
             }
@@ -146,12 +146,12 @@ namespace gekos_api.Patches
         {
             // Get the private fields thanks to reflections
             FieldInfo levelPanelField = typeof(SkillIcon).GetField("_levelPanel", BindingFlags.NonPublic | BindingFlags.Instance);
-            FieldInfo skillClassField = typeof(SkillIcon).GetField("skillClass", BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo skillClassField = typeof(SkillIcon).GetField("_skill", BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (levelPanelField != null && skillClassField != null)
             {
                 SkillLevelPanel levelPanel = (SkillLevelPanel)levelPanelField.GetValue(icon);
-                SkillClass skillClass = (SkillClass)skillClassField.GetValue(icon);
+                Skill skillClass = (Skill)skillClassField.GetValue(icon);
 
                 if (levelPanel != null && skillClass != null)
                 {

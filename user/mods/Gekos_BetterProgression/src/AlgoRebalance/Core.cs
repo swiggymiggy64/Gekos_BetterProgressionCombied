@@ -1,4 +1,6 @@
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
+using SPTarkov.Server.Core.Constants;
+using SPTarkov.Server.Core.Models.Enums;
 
 namespace GekosBetterProgression.AlgoRebalance;
 
@@ -7,7 +9,7 @@ public static class Core
     //Main entrypoint
     public static bool AlgorithmicallyRebalance(Context context)
     {
-        var traders = context.tables.Traders.Values;
+        var traders = context.tradersTable.Values;
 
         var changedItems = new Dictionary<int, List<ChangedItem>>();
 
@@ -52,13 +54,13 @@ public static class Core
             if (Utils.IsQuestLocked(changed.trade, changed.trader, context))
             {
                 changed.score += (float)cfg.questLockDelta;
-                if (cfg.logBartersAndLocks) context.logger.Info(context.tables.Templates.Items[changed.trade.Template].Name + " is a quest-locked item\t(Trade ID: " + changed.trade.Id + ")");
+                if (cfg.logBartersAndLocks) context.logger.Info(context.templateTable.Items[changed.trade.Template].Name + " is a quest-locked item\t(Trade ID: " + changed.trade.Id + ")");
             }
 
             if (Utils.IsBarterTrade(changed.trade, changed.trader))
             {
                 changed.score += (float)cfg.barterDelta;
-                if (cfg.logBartersAndLocks) context.logger.Info(context.tables.Templates.Items[changed.trade.Template].Name + " is a bartered item\t(Trade ID: " + changed.trade.Id + ")");
+                if (cfg.logBartersAndLocks) context.logger.Info(context.templateTable.Items[changed.trade.Template].Name + " is a bartered item\t(Trade ID: " + changed.trade.Id + ")");
             }
 
             if (cfg.deltaByTrader.ContainsKey(trader.Base.Id)) changed.score += (float)cfg.deltaByTrader[trader.Base.Id];
@@ -96,9 +98,9 @@ public static class Core
             {
                 try
                 {
-                    dynamic tpl = context.tables.Templates.Items[item.Template];
+                    dynamic tpl = context.templateTable.Items[item.Template];
                     ammo = (string)tpl.Properties.StackSlots[0].Props.filters[0].Filter[0];
-                    loyaltyScore = Ammo.ScoreAmmo(context.tables.Templates.Items[ammo], context);
+                    loyaltyScore = Ammo.ScoreAmmo(context.templateTable.Items[ammo], context);
                     ammoOrBox = true;
                 }
                 catch
@@ -109,7 +111,7 @@ public static class Core
 
             if (ammoOrBox && ammo != null)
             {
-                if (context.tables.Templates.Items.TryGetValue(ammo, out var tpl) && tpl.Properties != null)
+                if (context.templateTable.Items.TryGetValue(ammo, out var tpl) && tpl.Properties != null)
                 {
                     if (tpl.Properties.Caliber != null && !cfg.ammoRules.ignoreCalibers.Contains(tpl.Properties.Caliber))
                     {
@@ -151,7 +153,7 @@ public static class Core
             {
                 bool doClamp = cfg.clampToMaxLevel;
                 if (cfg.forceClampingOfQuestlockedItems && Utils.IsQuestLocked(changedItem.trade, changedItem.trader, context)) doClamp = true;
-                if (changedItem.logChange) context.logger.Info($"Setting {context.tables.Templates.Items[changedItem.trade.Template].Name} at loyalty level {Utils.LoyaltyFromScore(changedItem.score, doClamp)} ({changedItem.score})");
+                if (changedItem.logChange) context.logger.Info($"Setting {context.templateTable.Items[changedItem.trade.Template].Name} at loyalty level {Utils.LoyaltyFromScore(changedItem.score, doClamp)} ({changedItem.score})");
                 Utils.SetLoyalty(changedItem.trade.Id, changedItem.score, changedItem.trader, doClamp);
             }
         }
@@ -160,7 +162,7 @@ public static class Core
     private static void ApplyOverrides(Context context)
     {
         var cfg = context.config.algorithmicalRebalancing;
-        var traders = context.tables.Traders.Values;
+        var traders = context.tradersTable.Values;
 
         foreach (var trader in traders)
         {

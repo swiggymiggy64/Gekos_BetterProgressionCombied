@@ -6,14 +6,14 @@ internal class ContainerChanges()
     {
         foreach (KeyValuePair<string, int[]> item in context.config.misc.containerSizeChanges.changes)
         {
-            if (!context.tables.Templates.Items.ContainsKey(item.Key))
+            if (!context.templateTable.Items.ContainsKey(item.Key))
             {
                 continue;
             }
 
             int sizeH = item.Value[0];
             int sizeV = item.Value[1];
-            var containerProps = context.tables.Templates.Items[item.Key]?.Properties?.Grids?.First().Properties;
+            var containerProps = context.templateTable.Items[item.Key]?.Properties?.Grids?.First().Properties;
 
             if (containerProps is null)
             {

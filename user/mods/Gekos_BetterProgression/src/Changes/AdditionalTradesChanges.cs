@@ -10,7 +10,7 @@ public static class AdditionalTradesChanges
         {
             string traderId = customTrade.Key;
             string tradeId = customTrade.Value.barterScheme.First().Key; 
-            Trader trader = context.tables.Traders[traderId];
+            Trader trader = context.tradersTable[traderId];
             AdvancedConfig.CustomTrade trade = customTrade.Value;
 
             trader.Assort.Items.AddRange(trade.items);

@@ -8,8 +8,8 @@ public static class AdditionalItemsChanges
 {
     public static bool Apply(Context context)
     {
-        Dictionary<string, IEnumerable<Buff>> buffDatabase = context.tables.Globals.Configuration.Health.Effects.Stimulator.Buffs;
-        Dictionary<MongoId, TemplateItem> itemDatabase = context.tables.Templates.Items;
+        var buffDatabase = context.globalTable.Configuration.Health.Effects.Stimulator.Buffs;
+        Dictionary<MongoId, TemplateItem> itemDatabase = context.templateTable.Items;
 
         foreach (var buff in context.advancedConfig.customBuffs)
         {

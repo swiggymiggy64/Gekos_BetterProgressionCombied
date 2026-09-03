@@ -1,6 +1,8 @@
 ﻿using SPTarkov.Server.Core.Models.Common;
 using SPTarkov.Server.Core.Models.Eft.Common.Tables;
 using SPTarkov.Server.Core.Models.Eft.Hideout;
+using SPTarkov.Server.Core.Constants;
+using SPTarkov.Server.Core.Models.Enums;
 
 namespace GekosBetterProgression.Changes;
 
@@ -43,7 +45,7 @@ internal class CraftingChanges()
 
     public static bool Apply(Context context)
     {
-        List<HideoutProduction>? crafts = context.tables.Hideout.Production.Recipes?.FindAll((production) => { return !craftsToNotModify.Contains(production.EndProduct); });
+        List<HideoutProduction>? crafts = context.hideoutTable.Production.Recipes?.FindAll((production) => { return !craftsToNotModify.Contains(production.EndProduct); });
 
         if (crafts is null)
         {

@@ -6,7 +6,7 @@ public class SkillChanges()
     {
         var skillConfig = context.config.skillChanges;
 
-        SPTarkov.Server.Core.Models.Eft.Common.Config eftConfig = context.databaseService.GetGlobals().Configuration;
+        var eftConfig = context.globalTable.Configuration;
         eftConfig.SkillFreshEffectiveness = skillConfig.skillFreshEffectiveness;
         eftConfig.SkillFreshPoints = skillConfig.skillFreshPoints;
         eftConfig.SkillPointsBeforeFatigue = skillConfig.skillPointsBeforeFatigue;

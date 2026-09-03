@@ -8,14 +8,14 @@ public static class PriceChanges
     {
         foreach (var priceChange in context.config.misc.priceChanges)
         {
-            var handbookItem = context.tables.Templates.Handbook.Items.Find((i) => i.Id == priceChange.Key);
+            var handbookItem = context.templateTable.Handbook.Items.Find((i) => i.Id == priceChange.Key);
             if (handbookItem == null)
             {
                 continue;
             }
             handbookItem.Price = priceChange.Value;
 
-            foreach (var trader in context.tables.Traders)
+            foreach (var trader in context.tradersTable)
             {
                 if (trader.Value.Assort == null)
                 {

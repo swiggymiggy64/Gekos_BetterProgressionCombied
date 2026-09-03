@@ -43,14 +43,14 @@ namespace gekos_api.Patches
             try
             {
                 // Try to get the field using Harmony's AccessTools
-                var fieldInfo = AccessTools.Field(typeof(T), "SkillBuffClass");
+                var fieldInfo = AccessTools.Field(typeof(T), "FloatBuff");
                 if (fieldInfo == null)
                 {
-                    Plugin.LogSource.LogWarning($"Could not find field 'skillBuffClass' in type {typeof(T).Name}.");
+                    Plugin.LogSource.LogWarning($"Could not find field 'FloatBuff' in type {typeof(T).Name}.");
                     return;
                 }
                 // Retrieve the field value
-                dynamic buffClass = fieldInfo.GetValue(__instance);
+                SkillManager.FloatBuff buffClass = fieldInfo.GetValue(__instance) as SkillManager.FloatBuff;
 
                 EBuffId? skillBuff = buffClass?.Id;
                 if (skillBuff == null)
@@ -72,37 +72,37 @@ namespace gekos_api.Patches
     }
 
     // Actual classes
-    public class SkillBuffMulti1 : SkillBuffMultiBase<SkillManager.SkillBuffClass.Class1425>
+    public class SkillBuffMulti1 : SkillBuffMultiBase<SkillManager.FloatBuff.CG_PerLevel>
     {
         [PatchPostfix]
-        public static void Postfix(ref SkillManager.SkillBuffClass.Class1425 __instance)
+        public static void Postfix(ref SkillManager.FloatBuff.CG_PerLevel __instance)
         {
             DoPostfix(ref __instance);
         }
     }
 
-    public class SkillBuffMulti2 : SkillBuffMultiBase<SkillManager.SkillBuffClass.Class1426>
+    public class SkillBuffMulti2 : SkillBuffMultiBase<SkillManager.FloatBuff.CG_Max>
     {
         [PatchPostfix]
-        public static void Postfix(ref SkillManager.SkillBuffClass.Class1426 __instance)
+        public static void Postfix(ref SkillManager.FloatBuff.CG_Max __instance)
         {
             DoPostfix(ref __instance);
         }
     }
 
-    public class SkillBuffMulti3 : SkillBuffMultiBase<SkillManager.SkillBuffClass.Class1427>
+    public class SkillBuffMulti3 : SkillBuffMultiBase<SkillManager.FloatBuff.CG_Custom>
     {
         [PatchPostfix]
-        public static void Postfix(ref SkillManager.SkillBuffClass.Class1427 __instance)
+        public static void Postfix(ref SkillManager.FloatBuff.CG_Custom __instance)
         {
             DoPostfix(ref __instance);
         }
     }
 
-    public class SkillBuffMulti4 : SkillBuffMultiBase<SkillManager.SkillBuffClass.Class1428>
+    public class SkillBuffMulti4 : SkillBuffMultiBase<SkillManager.FloatBuff.CG_Elite>
     {
         [PatchPostfix]
-        public static void Postfix(ref SkillManager.SkillBuffClass.Class1428 __instance)
+        public static void Postfix(ref SkillManager.FloatBuff.CG_Elite __instance)
         {
             DoPostfix(ref __instance);
         }

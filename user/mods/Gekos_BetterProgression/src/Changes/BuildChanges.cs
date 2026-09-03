@@ -7,7 +7,7 @@ public class BuildChanges
     {
         GekoConfig.HideoutBuildsChanges config = context.config.hideoutBuildsChanges;
 
-        foreach (var area in context.tables.Hideout.Areas)
+        foreach (var area in context.hideoutTable.Areas)
         {
             foreach (var stage in area.Stages.Values)
             {

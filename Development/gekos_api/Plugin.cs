@@ -18,7 +18,7 @@ using System.Collections;
 
 namespace gekos_api
 {
-    [BepInPlugin("gekos_api_uniqueGUID", "gekos_api", "0.4.0")]
+    [BepInPlugin("gekos_api_uniqueGUID", "gekos_api", "0.5.1")]
     public class Plugin : BaseUnityPlugin
     {
         public static ManualLogSource LogSource;
@@ -28,8 +28,16 @@ namespace gekos_api
         private void Awake() {
             LogSource = Logger;
 
-            //Fix GP icon
-            new GPFix().Enable();
+            try
+            {
+                // Fetch and validate all server configuration before enabling any patches.
+                ConfigHandler.Initialize();
+            }
+            catch (Exception ex)
+            {
+                LogSource.LogError($"Geko's API was not loaded because its server configuration could not be retrieved: {ex.Message}");
+                return;
+            }
 
             //Make it so that items whose sale price is close to 0 are sold for 1 instead of being unsellable
             new MinPriceFix().Enable();
@@ -78,8 +86,8 @@ namespace gekos_api
                         Logger.LogMessage("Skills save data successfully loaded!");
                         AdditionalSkillLevels.AdditionalLevels.SetWithoutSaving(loadedData);
                         AdditionalSkillLevels.UpdateAllBuffs();
-                        loaded = true;
                     }
+                    loaded = true;
                 } catch { }
                 yield return new WaitForSeconds(.5f);
             }

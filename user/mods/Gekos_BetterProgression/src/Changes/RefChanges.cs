@@ -5,12 +5,14 @@ using System.Reflection;
 using SPTarkov.Server.Core.Controllers;
 using SPTarkov.Server.Core.Models.Eft.Game;
 using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Services.InRaid;
 using SPTarkov.Server.Core.Models.Eft.Match;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Helpers;
 using SPTarkov.Server.Core.Models.Eft.Profile;
 using SPTarkov.Reflection.Patching;
 using SPTarkov.Server.Core.Constants;
+using HarmonyLib;
 
 namespace GekosBetterProgression.Changes;
 
@@ -22,8 +24,11 @@ public static class RefChanges
     {
         ChangeRefPurchasingOptions(context);
 
-        GainRefRepOnKillPatch.context = context;
-        new GainRefRepOnKillPatch().Enable();
+        if (context.config.refChanges.refStandingOnKill.enable)
+        {
+            GainRefRepOnKillPatch.context = context;
+            new GainRefRepOnKillPatch().Enable();
+        }
         new AddSupportForGPTradersPatch().Enable();
         
         return true;
@@ -31,7 +36,7 @@ public static class RefChanges
 
     private static void ChangeRefPurchasingOptions(Context context)
     {
-        Trader refTrader = context.tables.Traders[REF_TRADER_ID];
+        Trader refTrader = context.tradersTable[REF_TRADER_ID];
         GekoConfig.RefChanges config = context.config.refChanges;
 
         if (config.refBuysInGPCoins)
@@ -68,21 +73,20 @@ public class AddSupportForGPTradersPatch : AbstractPatch
 
 public class GainRefRepOnKillPatch() : AbstractPatch
 {
-    public static Context context;
+    public static Context context = null!;
 
     protected override MethodBase GetTargetMethod()
     {
-        return typeof(LocationLifecycleService).GetMethod(nameof(LocationLifecycleService.EndLocalRaid));
+        return AccessTools.Method(typeof(LocationLifecycleService), "HandlePostRaidPmc");
     }
 
     [PatchPostfix]
-    static void Postfix(MongoId sessionId, EndLocalRaidRequestData request)
+    static void Postfix(SptProfile fullServerProfile, EndLocalRaidRequestData request)
     {
         string[] validKilledSides = new string[] { Sides.PmcUsec, Sides.PmcBear };
         IEnumerable<Victim> pmcKills = request.Results.Profile.Stats.Eft.Victims.Where((victim) => validKilledSides.Contains(victim.Role));
 
-        SptProfile fullProfile = context.profileHelper.GetFullProfile(sessionId);
-        fullProfile.CharacterData.PmcData.TradersInfo["6617beeaa9cfa777ca915b7c"].Standing += RepByKills(context, pmcKills);
+        fullServerProfile.CharacterData.PmcData.TradersInfo[RefChanges.REF_TRADER_ID].Standing += RepByKills(context, pmcKills);
     }
 
     private static double RepByKills(Context context, IEnumerable<Victim> victims)

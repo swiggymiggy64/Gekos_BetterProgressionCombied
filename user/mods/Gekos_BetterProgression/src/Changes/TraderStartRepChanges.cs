@@ -8,13 +8,13 @@ public static class TraderStartRepChanges
     {
         double initialStanding = context.config.overrideInitialStanding.defaultOverride;
 
-        foreach (KeyValuePair<string, ProfileSides> item in context.tables.Templates.Profiles)
+        foreach (KeyValuePair<string, ProfileSides> item in context.templateTable.Profiles)
         {
             foreach (var template in new TemplateSide[] { item.Value.Bear, item.Value.Usec })
             {
                 template.Trader.InitialStanding["default"] = initialStanding;
 
-                foreach (var traderId in context.tables.Traders.Keys)
+                foreach (var traderId in context.tradersTable.Keys)
                 {
                     template.Trader.InitialStanding[traderId] = initialStanding;
                 }

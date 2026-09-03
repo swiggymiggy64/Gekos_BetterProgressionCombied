@@ -22,11 +22,11 @@ namespace gekos_api.Patches
 
         protected override MethodBase GetTargetMethod()
         {
-            return typeof(SkillClass).GetMethod(nameof(SkillClass.UseEffectiveness), BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
+            return typeof(Skill).GetMethod(nameof(Skill.UseEffectiveness), BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
         }
 
         [PatchPostfix]
-        private static void Postfix(ref SkillClass __instance, ref float __result, ref float input)
+        private static void Postfix(ref Skill __instance, ref float __result, ref float input)
         {
             bool skillSpecific = skillsConfig.SkillMultipliers.TryGetValue(__instance.Id.ToString(), out float multiplier);
 

@@ -1,5 +1,8 @@
 ﻿using SPTarkov.Server.Core.Models.Common;
 
+using SPTarkov.Server.Core.Constants;
+using SPTarkov.Server.Core.Models.Enums;
+
 namespace GekosBetterProgression.Changes;
 
 public class SICCCaseChanges()
@@ -8,8 +11,8 @@ public class SICCCaseChanges()
     {
         HashSet<MongoId> newFilter = new();
 
-        var docsFilter = context.tables.Templates.Items[ItemTpl.CONTAINER_DOCUMENTS_CASE].Properties?.Grids?.First().Properties?.Filters?.First().Filter;
-        var SICCFilter = context.tables.Templates.Items[ItemTpl.CONTAINER_SICC].Properties?.Grids?.First().Properties?.Filters?.First().Filter;
+        var docsFilter = context.templateTable.Items[ItemTpl.CONTAINER_DOCUMENTS_CASE].Properties?.Grids?.First().Properties?.Filters?.First().Filter;
+        var SICCFilter = context.templateTable.Items[ItemTpl.CONTAINER_SICC].Properties?.Grids?.First().Properties?.Filters?.First().Filter;
 
         if (SICCFilter is null)
         {
@@ -34,7 +37,7 @@ public class SICCCaseChanges()
             newFilter.Add((MongoId)item);
         }
 
-        context.tables.Templates.Items[ItemTpl.CONTAINER_SICC].Properties!.Grids!.First().Properties!.Filters!.First().Filter = newFilter;
+        context.templateTable.Items[ItemTpl.CONTAINER_SICC].Properties!.Grids!.First().Properties!.Filters!.First().Filter = newFilter;
 
         return true;
     }

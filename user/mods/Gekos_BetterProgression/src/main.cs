@@ -1,11 +1,15 @@
 using SPTarkov.DI.Annotations;
+using SPTarkov.Common.Models.Logging;
 using SPTarkov.Server.Core.DI;
 using SPTarkov.Server.Core.Models.Spt.Mod;
 using SPTarkov.Server.Core.Models.Utils;
-using SPTarkov.Server.Core.Helpers;
+using SPTarkov.Server.Core.Helpers.Items;
+using SPTarkov.Server.Core.Helpers.Profile;
+using SPTarkov.Server.Core.Helpers.Server;
 using System.Reflection;
-using SPTarkov.Server.Core.Services;
-using SPTarkov.Server.Core.Servers;
+using SPTarkov.Server.Core.Models.Spt.Config;
+using SPTarkov.Server.Core.Models.Spt.Tables;
+using SPTarkov.Server.Core.Services.Locales;
 using SPTarkov.Server.Core.Utils;
 using GekosBetterProgression.Changes;
 using GekosBetterProgression.AlgoRebalance;
@@ -20,7 +24,7 @@ namespace GekosBetterProgression;
 /// All properties must be overriden, properties you don't use may be left null.
 /// It is read by the mod loader when this mod is loaded.
 /// </summary>
-public record ModMetadata : AbstractModMetadata
+public record ModMetadata : IModMetadata
 {
     /// <summary>
     /// Any string can be used for a modId, but it should ideally be unique and not easily duplicated
@@ -28,111 +32,159 @@ public record ModMetadata : AbstractModMetadata
     /// It is recommended (but not mandatory) to use the reverse domain name notation,
     /// see: https://docs.oracle.com/javase/tutorial/java/package/namingpkgs.html
     /// </summary>
-    public override string ModGuid { get; init; } = "com.geko.gekosbetterprogression";
+    public string ModGuid { get; init; } = "com.geko.gekosbetterprogression";
 
     /// <summary>
     /// The name of your mod
     /// </summary>
-    public override string Name { get; init; } = "Geko's Better Progression";
+    public string Name { get; init; } = "Geko's Better Progression";
 
     /// <summary>
     /// Who created the mod (you!)
     /// </summary>
-    public override string Author { get; init; } = "DrunkGeko";
+    public string Author { get; init; } = "DrunkGeko";
 
     /// <summary>
     /// A list of people who helped you create the mod
     /// </summary>
-    public override List<string>? Contributors { get; init; } = ["marbL-"];
+    public List<string>? Contributors { get; init; } = ["marbL-"];
 
     /// <summary>
     ///  The version of the mod, follows SEMVER rules (https://semver.org/)
     /// </summary>
-    public override SemanticVersioning.Version Version { get; init; } = new("2.0.2");
+    public SemanticVersioning.Version Version { get; init; } = new("2.1.0");
 
     /// <summary>
     /// What version of SPT is your mod made for, follows SEMVER rules (https://semver.org/)
     /// </summary>
-    public override SemanticVersioning.Range SptVersion { get; init; } = new("~4.0.0");
+    public SemanticVersioning.Range SptVersion { get; init; } = new("~4.1.3");
 
     /// <summary>
     /// ModIds that you know cause problems with your mod
     /// </summary>
-    public override List<string>? Incompatibilities { get; init; }
+    public List<string>? Incompatibilities { get; init; }
 
     /// <summary>
     /// ModIds your mod REQUIRES to function
     /// </summary>
-    public override Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
+    public Dictionary<string, SemanticVersioning.Range>? ModDependencies { get; init; }
 
     /// <summary>
     /// Where to find your mod online
     /// </summary>
-    public override string? Url { get; init; } = "https://forge.sp-tarkov.com/mod/2088/gekos-better-progression";
-
-    /// <summary>
-    /// Does your mod load bundles? (e.g. new weapon/armor mods)
-    /// </summary>
-    public override bool? IsBundleMod { get; init; } = false;
+    public string? Url { get; init; } = "https://forge.sp-tarkov.com/mod/2088/gekos-better-progression";
 
     /// <summary>
     /// What Licence does your mod use
     /// </summary>
-    public override string License { get; init; } = "MIT";
+    public string License { get; init; } = "MIT";
+
+    public bool HasPrepatcher { get; init; }
 }
 
-// We want to load after PreSptModLoader is complete, so we set our type priority to that, plus 1.
-[Injectable(TypePriority = OnLoadOrder.PreSptModLoader + 1)]
+// Load configuration and shared dependencies immediately before preload work.
+[Injectable(TypePriority = OnLoadOrder.Preload - 1)]
 public class PreSPTLoader(
         ISptLogger<PreSPTLoader> logger,
         ItemHelper itemHelper,
         PresetHelper presetHelper,
         ProfileHelper profileHelper,
-        ConfigServer configServer,
+        QuestConfig questConfig,
         HashUtil hashUtil,
         ModHelper modHelper,
-        Context context
+        Context context,
+        GlobalTable globalTable,
+        HideoutTable hideoutTable,
+        LocaleTable localeTable,
+        TemplateTable templateTable,
+        TradersTable tradersTable,
+        LocaleService localeService
     ) // We inject a logger for use inside our class, it must have the class inside the diamond <> brackets
     : IOnLoad // Implement the IOnLoad interface so that this mod can do something on server load
 {
-    public Task OnLoad()
+    public Task OnLoadAsync(CancellationToken cancellationToken)
     {
+        if (context.IsInitialized)
+        {
+            return Task.CompletedTask;
+        }
 
         var pathToMod = modHelper.GetAbsolutePathToModFolder(Assembly.GetExecutingAssembly());
 
         var config = modHelper.GetJsonDataFromFile<GekoConfig>(pathToMod, "config.json5");
         var advancedConfig = modHelper.GetJsonDataFromFile<AdvancedConfig>(pathToMod, "advancedConfig.json5");
 
+        if (config is null || advancedConfig is null)
+        {
+            throw new InvalidDataException("Geko's Better Progression could not load config.json5 or advancedConfig.json5.");
+        }
+
         var logWrapper = new LoggerWrapper<PreSPTLoader>(logger);
 
-        context.PreInitialize(itemHelper, presetHelper, profileHelper, configServer, hashUtil, config, advancedConfig, logWrapper);
+        context.PreInitialize(itemHelper, presetHelper, profileHelper, questConfig, hashUtil, config, advancedConfig,
+            logWrapper, globalTable, hideoutTable, localeTable, templateTable, tradersTable, localeService);
 
         return Task.CompletedTask;
     }
 }
 
-// We want to load after PostDBModLoader is complete, so we set our type priority to that, plus 1.
-[Injectable(TypePriority = OnLoadOrder.TraderRegistration + 100)] //Load a fair bit after traders are registered, so that we can safely modify their assortments
-public class PostDBLoader(
+// Custom item identities must exist before profiles are loaded.
+[Injectable(TypePriority = OnLoadOrder.Preload)]
+public class CustomItemLoader(
     Context context,
-    ISptLogger<PostDBLoader> logger,
-        DatabaseService databaseService,
-        DatabaseServer databaseServer,
-        LocaleService localeService
-)
-    : IOnLoad // Implement the `IOnLoad` interface so that this mod can do something
+    PreSPTLoader initializer,
+    ISptLogger<CustomItemLoader> logger
+) : IOnLoad
 {
-
-    public Task OnLoad()
+    public async Task OnLoadAsync(CancellationToken cancellationToken)
     {
+        await initializer.OnLoadAsync(cancellationToken);
+
         if (!context.IsInitialized)
         {
             throw new Exception("Context was not initialized!");
         }
 
-        var logWrapper = new LoggerWrapper<PostDBLoader>(logger);
+        SafelyApplyCustomItems();
+    }
 
-        context.PostInitialize(databaseService, databaseServer, databaseService.GetTables(), logWrapper, localeService);
+    private void SafelyApplyCustomItems()
+    {
+        try
+        {
+            if (context.config.misc.addCustomTrades)
+            {
+                AdditionalItemsChanges.Apply(context);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.Error("Failed to add custom items during preload!");
+            if (context.config.dev.showFullError)
+            {
+                logger.Error($"Error Details: {ex.Message}");
+                logger.Error($"Stack Trace:\n{ex.StackTrace}");
+            }
+
+            throw;
+        }
+    }
+}
+
+[Injectable(TypePriority = OnLoadOrder.PostLoad)]
+public class PostDBLoader(
+    Context context,
+    ISptLogger<PostDBLoader> logger
+)
+    : IOnLoad // Implement the `IOnLoad` interface so that this mod can do something
+{
+
+    public Task OnLoadAsync(CancellationToken cancellationToken)
+    {
+        if (!context.IsInitialized)
+        {
+            throw new Exception("Context was not initialized!");
+        }
 
         ApplyPostDBChanges(context);
 
@@ -204,10 +256,6 @@ public class PostDBLoader(
         SafelyRunIf(cfg.misc.removeFirFromFlea, () => FirChanges.RemoveFirFromFlea(context), log,
             "Removing FiR requirements from flea market listings...",
             "Failed to remove FiR requirements from flea market listings!");
-
-        SafelyRunIf(cfg.misc.addCustomTrades, () => AdditionalItemsChanges.Apply(context), log,
-            "Adding custom items...",
-            "Failed to add custom items!");
 
         SafelyRunIf(cfg.misc.addCustomTrades, () => AdditionalTradesChanges.Apply(context), log,
             "Adding custom trades...",

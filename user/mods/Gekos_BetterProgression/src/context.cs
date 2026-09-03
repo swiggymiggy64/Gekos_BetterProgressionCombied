@@ -1,23 +1,26 @@
-using SPTarkov.Server.Core.Helpers;
-using SPTarkov.Server.Core.Models.Spt.Server;
-using SPTarkov.Server.Core.Servers;
-using SPTarkov.Server.Core.Services;
+using SPTarkov.Server.Core.Helpers.Items;
+using SPTarkov.Server.Core.Helpers.Profile;
+using SPTarkov.Server.Core.Models.Spt.Config;
+using SPTarkov.Server.Core.Models.Spt.Tables;
+using SPTarkov.Server.Core.Services.Locales;
 using SPTarkov.Server.Core.Utils;
 using SPTarkov.DI.Annotations;
 
 namespace GekosBetterProgression;
 
-[Injectable]
+[Injectable(InjectionType.Singleton)]
 public class Context
 {
     
-    public DatabaseService databaseService;
-    public DatabaseServer databaseServer;
-    public DatabaseTables tables;
+    public GlobalTable globalTable;
+    public HideoutTable hideoutTable;
+    public LocaleTable localeTable;
+    public TemplateTable templateTable;
+    public TradersTable tradersTable;
     public ItemHelper itemHelper;
     public PresetHelper presetHelper;
     public ProfileHelper profileHelper;
-    public ConfigServer sptConfig;
+    public QuestConfig questConfig;
     public HashUtil hashUtil;
     public GekoConfig config;
     public AdvancedConfig advancedConfig;
@@ -31,35 +34,32 @@ public class Context
         ItemHelper _itemHelper,
         PresetHelper _presetHelper,
         ProfileHelper _profileHelper,
-        ConfigServer _sptConfig,
+        QuestConfig _questConfig,
         HashUtil _hashUtil,
         GekoConfig _config,
         AdvancedConfig _advancedConfig,
-        ILoggerWrapper _logger
+        ILoggerWrapper _logger,
+        GlobalTable _globalTable,
+        HideoutTable _hideoutTable,
+        LocaleTable _localeTable,
+        TemplateTable _templateTable,
+        TradersTable _tradersTable,
+        LocaleService _localeService
     )
     {
         this.itemHelper = _itemHelper;
         this.presetHelper = _presetHelper;
         this.profileHelper = _profileHelper;
-        this.sptConfig = _sptConfig;
+        this.questConfig = _questConfig;
         this.hashUtil = _hashUtil;
         this.config = _config;
         this.advancedConfig = _advancedConfig;
         this.logger = _logger;
-    }
-
-    public void PostInitialize(
-        DatabaseService _databaseService,
-        DatabaseServer _databaseServer,
-        DatabaseTables _tables,
-        ILoggerWrapper _logger,
-        LocaleService _localeService
-    )
-    {
-        this.databaseService = _databaseService;
-        this.databaseServer = _databaseServer;
-        this.tables = _tables;
-        this.logger = _logger;
+        this.globalTable = _globalTable;
+        this.hideoutTable = _hideoutTable;
+        this.localeTable = _localeTable;
+        this.templateTable = _templateTable;
+        this.tradersTable = _tradersTable;
         this.localeService = _localeService;
     }
 

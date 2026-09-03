@@ -10,13 +10,13 @@ using System.Threading.Tasks;
 
 namespace GekosBetterProgression
 {
-    [Injectable]
+    [Injectable(TypePriority = OnLoadOrder.Routers - 1)]
     public class Router(JsonUtil jsonUtil, Callbacks callbacks) : StaticRouter(jsonUtil, [
             new RouteAction<EmptyRequestData>(
-                "/server-config-router/skillpoints", async (_, _, _, _) => await callbacks.HandleGetSkillPointConfig()
+                "/server-config-router/skillpoints", (_, _, _, _, _) => callbacks.HandleGetSkillPointConfig()
             ),
             new RouteAction<EmptyRequestData>(
-                "/server-config-router/skillsconfig", async (_, _, _, _) => await callbacks.HandleGetSkillsConfig()
+                "/server-config-router/skillsconfig", (_, _, _, _, _) => callbacks.HandleGetSkillsConfig()
             )
         ])
     { }

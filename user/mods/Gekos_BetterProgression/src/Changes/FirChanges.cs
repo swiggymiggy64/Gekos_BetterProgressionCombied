@@ -14,7 +14,7 @@ public class FirChanges
         Regex foundInRaidRegex = new Regex("Find.*in raid", RegexOptions.IgnoreCase);
         Regex inRaidRegex = new Regex("in raid", RegexOptions.IgnoreCase);
 
-        foreach (Quest quest in context.tables.Templates.Quests.Values)
+        foreach (Quest quest in context.templateTable.Quests.Values)
         {
             var sets = new List<List<QuestCondition>?> {
                 quest.Conditions.AvailableForFinish,
@@ -41,7 +41,7 @@ public class FirChanges
             }
         }
 
-        var locales = context.tables.Locales.Global;
+        var locales = context.localeTable.Global;
 
         // Remove "in raid" from locale text
         foreach (var lang in locales.Keys)
@@ -69,13 +69,13 @@ public class FirChanges
 
     public static bool RemoveFirFromFlea(Context context)
     {
-        context.tables.Globals.Configuration.RagFair.IsOnlyFoundInRaidAllowed = false;
+        context.globalTable.Configuration.RagFair.IsOnlyFoundInRaidAllowed = false;
         return true;
     }
 
     public static bool RemoveFirFromHideout(Context context)
     {
-        List<HideoutArea> hideoutAreas = context.tables.Hideout.Areas;
+        List<HideoutArea> hideoutAreas = context.hideoutTable.Areas;
 
         foreach (var area in hideoutAreas)
         {
@@ -101,7 +101,7 @@ public class FirChanges
 
     public static bool RemoveFirFromRepeatables(Context context)
     {
-        var questConfig = context.sptConfig.GetConfig<QuestConfig>();
+        var questConfig = context.questConfig;
 
         if (questConfig?.RepeatableQuests == null)
         {

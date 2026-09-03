@@ -63,7 +63,7 @@ namespace gekos_api.Patches
 
         private static float pointsPerLevel = 1;
 
-        private static Dictionary<ESkillId, AbstractSkillClass> skills;
+        private static Dictionary<ESkillId, BaseSkill> skills;
 
         private static PointsConfig config;
 
@@ -83,17 +83,17 @@ namespace gekos_api.Patches
         static AdditionalSkillLevels()
         {
             _additionalLevels = new SaveData();
-            skills = new Dictionary<ESkillId, AbstractSkillClass>();
+            skills = new Dictionary<ESkillId, BaseSkill>();
             config = ConfigHandler.GetPointsConfig();
         }
 
         protected override MethodBase GetTargetMethod()
         {
-            return AccessTools.PropertyGetter(typeof(SkillClass), nameof(SkillClass.Level));
+            return AccessTools.PropertyGetter(typeof(BaseSkill), nameof(BaseSkill.Level));
         }
 
         [PatchPostfix]
-        static void Postfix(ref AbstractSkillClass __instance, ref int __result)
+        static void Postfix(ref BaseSkill __instance, ref int __result)
         {
             if (!config.enable) return;
             if (ExposeNativeLevel) return;
@@ -109,10 +109,10 @@ namespace gekos_api.Patches
         public static void DeltaLevels(ESkillId skill, float delta)
         {
             _additionalLevels[skill] += delta;
-            AbstractSkillClass actualSkill;
-            if (skills.TryGetValue(skill, out actualSkill) && actualSkill is SkillClass)
+            BaseSkill actualSkill;
+            if (skills.TryGetValue(skill, out actualSkill) && actualSkill is Skill)
             {
-                UpdateBuffs((SkillClass)actualSkill);
+                UpdateBuffs((Skill)actualSkill);
                 AvailableSkillPointsUI.UpdatePoints();
             }
         }
@@ -122,11 +122,11 @@ namespace gekos_api.Patches
         /// </summary>
         public static void UpdateAllBuffs()
         {
-            Profile player = Utils.GetPlayerProfile();
+            Profile player = gekos_api.Helpers.Utils.GetPlayerProfile();
 
             foreach (KeyValuePair<ESkillId, float> s in AdditionalLevels.GetDict())
             {
-                if (player.Skills.TryGetSkill(s.Key, out SkillClass skill))
+                if (player.Skills.TryGetSkill(s.Key, out Skill skill))
                 {
                     UpdateBuffs(skill);
                 }
@@ -135,7 +135,7 @@ namespace gekos_api.Patches
 
         public static int GetAvailableSkillPoints()
         {
-            Profile player = Utils.GetPlayerProfile();
+            Profile player = gekos_api.Helpers.Utils.GetPlayerProfile();
             int level = player.Info.Level;
             float spent = 0;
             foreach (KeyValuePair<ESkillId, float> s in AdditionalLevels.GetDict())
@@ -143,7 +143,7 @@ namespace gekos_api.Patches
                 spent += s.Value;
                 if (config.automaticallyRefundOverflows)
                 {
-                    if (player.Skills.TryGetSkill(s.Key, out SkillClass skill))
+                    if (player.Skills.TryGetSkill(s.Key, out Skill skill))
                     {
                         int skillLevel = skill.GetLevelForValue(skill.Current); //Get skill level before clamping
                         spent -= Mathf.Max(0, skillLevel - 51);
@@ -157,9 +157,9 @@ namespace gekos_api.Patches
         /// Recalculate the buffs for the given skill
         /// </summary>
         /// <param name="skill"></param>
-        public static void UpdateBuffs(SkillClass skill)
+        public static void UpdateBuffs(Skill skill)
         {
-            skill.method_3();
+            skill.UpdateRules();
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace gekos_api.Patches
         /// </summary>
         /// <param name="skill"></param>
         /// <returns></returns>
-        public static int NativeLevel(SkillClass skill)
+        public static int NativeLevel(Skill skill)
         {
             ESkillId skillId = skill.Id;
 
